@@ -64,8 +64,8 @@ export default function App() {
         ))}
       </div>
       <div style={s.overlay}/>
-      <div style={{position:"relative",zIndex:2}}>
-        <div style={s.divider}><div style={s.lineL}/><div style={s.dc}><div style={s.ds}/><span style={s.dsym}>✦</span><div style={s.ds}/></div><div style={s.lineR}/></div>
+      <div style={s.divider}><div style={s.lineL}/><div style={s.dc}><div style={s.ds}/><span style={s.dsym}>✦</span><div style={s.ds}/></div><div style={s.lineR}/></div>
+<div style={{position:"relative",zIndex:2}}>
         <div style={s.portal}>
           <p style={s.eyebrow}>Portal de acceso</p>
           <h1 style={s.title}>Universo <em style={{fontStyle:"italic",color:"#E8D5B0"}}>Despertar</em></h1>
