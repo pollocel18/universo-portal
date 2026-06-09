@@ -136,7 +136,7 @@ function Dashboard({ user, onLogout }) {
 
 const s = {
   wrap:{background:"#0E0B08",minHeight:"100vh",padding:"2.5rem 1.5rem",fontFamily:"'Jost',sans-serif",textAlign:"center",color:"#F5F0E8"},
-  divider:{display:"flex",alignItems:"center",justifyContent:"center",maxWidth:400,margin:"0 auto 2rem"},
+  divider:{display:"flex",alignItems:"center",justifyContent:"center",maxWidth:600,margin:"0 auto 2rem"},
   lineL:{flex:1,height:"0.5px",background:"linear-gradient(to right,transparent,rgba(201,169,110,0.5))"},
   lineR:{flex:1,height:"0.5px",background:"linear-gradient(to left,transparent,rgba(201,169,110,0.5))"},
   dc:{display:"flex",alignItems:"center",padding:"0 4px"},
