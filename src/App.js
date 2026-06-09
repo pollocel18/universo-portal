@@ -115,32 +115,20 @@ export default function App() {
 }
 
 function Dashboard({ user, onLogout }) {
-  const [token, setToken] = useState("");
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setToken(session.access_token);
+      if (session) {
+        window.location.href = `https://universo-despertar-art.vercel.app?token=${session.access_token}`;
+      }
     });
   }, []);
 
   return (
     <div style={s.wrap}>
-      <div style={s.divider}><div style={s.lineL}/><div style={s.dc}><div style={s.ds}/><span style={s.dsym}>✦</span><div style={s.ds}/></div><div style={s.lineR}/></div>
-      <div style={{maxWidth:520,margin:"0 auto",textAlign:"center"}}>
+      <div style={{position:"relative",zIndex:2,textAlign:"center",paddingTop:"3rem"}}>
         <p style={s.eyebrow}>Bienvenido de vuelta</p>
         <h1 style={s.title}>Universo <em style={{fontStyle:"italic",color:"#E8D5B0"}}>Despertar</em></h1>
-        <p style={{...s.sub, marginBottom:"2rem"}}>{user.email}</p>
-        <div style={s.grid}>
-          {APPS.map(app => (
-            <a key={app.num} href={`${app.url}?token=${token}`} target="_blank" rel="noreferrer" style={s.card}>
-              <span style={s.cardNum}>{app.num}</span>
-              <span style={{fontSize:28,display:"block",margin:"0.75rem 0"}}>{app.icon}</span>
-              <p style={s.cardTitle}>{app.title}</p>
-              <span style={s.cardTag}>Acceder →</span>
-            </a>
-          ))}
-        </div>
-        <button style={{...s.btn, marginTop:"2rem", maxWidth:200}} onClick={onLogout}>Cerrar sesión</button>
+        <p style={s.sub}>Entrando al universo...</p>
       </div>
     </div>
   );
