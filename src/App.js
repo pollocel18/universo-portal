@@ -115,6 +115,14 @@ export default function App() {
 }
 
 function Dashboard({ user, onLogout }) {
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setToken(session.access_token);
+    });
+  }, []);
+
   return (
     <div style={s.wrap}>
       <div style={s.divider}><div style={s.lineL}/><div style={s.dc}><div style={s.ds}/><span style={s.dsym}>✦</span><div style={s.ds}/></div><div style={s.lineR}/></div>
@@ -124,7 +132,7 @@ function Dashboard({ user, onLogout }) {
         <p style={{...s.sub, marginBottom:"2rem"}}>{user.email}</p>
         <div style={s.grid}>
           {APPS.map(app => (
-            <a key={app.num} href={app.url} target="_blank" rel="noreferrer" style={s.card}>
+            <a key={app.num} href={`${app.url}?token=${token}`} target="_blank" rel="noreferrer" style={s.card}>
               <span style={s.cardNum}>{app.num}</span>
               <span style={{fontSize:28,display:"block",margin:"0.75rem 0"}}>{app.icon}</span>
               <p style={s.cardTitle}>{app.title}</p>
