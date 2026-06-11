@@ -198,11 +198,12 @@ function PerfilCliente({ perfil, onVolver }) {
   const [bitacora, setBitacora] = useState([]);
   const [token, setToken] = useState("");
 
-  useEffect(() => {
+ useEffect(() => {
     cargarBitacora();
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setToken(session.access_token);
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cargarBitacora = async () => {
