@@ -6,6 +6,8 @@ const supabase = createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impubmh5cm1hbG1zZGVwdnpqaGZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTA2OTgsImV4cCI6MjA5NDYyNjY5OH0.09K8Es_SMn9PrnU-pBrGq954k8NFkAi93yVCYGfTckA"
 );
 
+const API = "https://cumpleanos-app.onrender.com";
+
 const APPS = [
   { num: "003", icon: "⏳", title: "La Bóveda de Cronos", url: "https://boveda-de-cronos-art.vercel.app/" },
   { num: "004", icon: "🌙", title: "Intérprete de Sueños", url: "https://interprete-suenos-art.vercel.app/" },
@@ -21,6 +23,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
+  const [rol, setRol] = useState("usuario");
 
   const handleLogin = async () => {
     setError("");
@@ -28,7 +31,14 @@ export default function App() {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) { setError(error.message); return; }
-    setUser(data.user);
+    const u = data.user;
+    // Obtener rol
+    const res = await fetch(`${API}/api/rol?user_id=${u.id}`, {
+      headers: { 'x-api-secret': process.env.REACT_APP_API_SECRET }
+    });
+    const rolData = await res.json();
+    setRol(rolData.rol);
+    setUser(u);
   };
 
   const handleRegister = async () => {
@@ -39,18 +49,36 @@ export default function App() {
     const { data, error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
     if (error) { setError(error.message); return; }
+    setRol("usuario");
     setUser(data.user);
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setRol("usuario");
     setEmail("");
     setPassword("");
     setConfirmPassword("");
   };
 
-  if (user) return <Dashboard user={user} onLogout={handleLogout} />;
+  if (user && rol === "admin") return <AdminPanel user={user} onLogout={handleLogout} />;
+  if (user && rol === "usuario") {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        window.location.href = `https://universo-despertar-art.vercel.app?token=${session.access_token}`;
+      }
+    });
+    return (
+      <div style={s.wrap}>
+        <div style={{position:"relative",zIndex:2,textAlign:"center",paddingTop:"3rem"}}>
+          <p style={s.eyebrow}>Bienvenido de vuelta</p>
+          <h1 style={s.title}>Universo <em style={{fontStyle:"italic",color:"#E8D5B0"}}>Despertar</em></h1>
+          <p style={s.sub}>Entrando al universo...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={s.wrap}>
@@ -64,13 +92,9 @@ export default function App() {
         ))}
       </div>
       <div style={s.overlay}/>
-      <div style={{...s.divider, position:"relative", zIndex:2}}>
-  <div style={s.lineL}/>
-  <div style={s.dc}><div style={s.ds}/><span style={s.dsym}>✦</span><div style={s.ds}/></div>
-  <div style={s.lineR}/>
-</div>
-<div style={{position:"relative",zIndex:2}}>
-  <div style={s.portal}>
+      <div style={s.divider}><div style={s.lineL}/><div style={s.dc}><div style={s.ds}/><span style={s.dsym}>✦</span><div style={s.ds}/></div><div style={s.lineR}/></div>
+      <div style={{position:"relative",zIndex:2}}>
+        <div style={s.portal}>
           <p style={s.eyebrow}>Portal de acceso</p>
           <h1 style={s.title}>Universo <em style={{fontStyle:"italic",color:"#E8D5B0"}}>Despertar</em></h1>
           <p style={s.sub}>Tu cuenta. Todas las apps. Un solo lugar.</p>
@@ -80,55 +104,149 @@ export default function App() {
           </div>
           {error && <p style={s.errorMsg}>{error}</p>}
           {tab === "login" && <>
-            <div style={s.field}>
-              <label style={s.label}>Correo</label>
-              <input style={s.input} type="email" placeholder="tu@correo.com" value={email} onChange={e=>setEmail(e.target.value)} />
-            </div>
-            <div style={s.field}>
-              <label style={s.label}>Contraseña</label>
-              <input style={s.input} type="password" placeholder="••••••••" value={password} onChange={e=>setPassword(e.target.value)} />
-            </div>
+            <div style={s.field}><label style={s.label}>Correo</label><input style={s.input} type="email" placeholder="tu@correo.com" value={email} onChange={e=>setEmail(e.target.value)} /></div>
+            <div style={s.field}><label style={s.label}>Contraseña</label><input style={s.input} type="password" placeholder="••••••••" value={password} onChange={e=>setPassword(e.target.value)} /></div>
             <button style={s.btn} onClick={handleLogin} disabled={loading}>{loading ? "Entrando..." : "Entrar ✦"}</button>
             <p style={s.note}>Accede a tus consultas y al Universo Despertar.</p>
-            <p style={s.firma}>-=ArtMoreno=-</p>
           </>}
           {tab === "registro" && <>
-            <div style={s.field}>
-              <label style={s.label}>Correo</label>
-              <input style={s.input} type="email" placeholder="tu@correo.com" value={email} onChange={e=>setEmail(e.target.value)} />
-            </div>
-            <div style={s.field}>
-              <label style={s.label}>Contraseña</label>
-              <input style={s.input} type="password" placeholder="Mínimo 8 caracteres" value={password} onChange={e=>setPassword(e.target.value)} />
-            </div>
-            <div style={s.field}>
-              <label style={s.label}>Confirmar contraseña</label>
-              <input style={s.input} type="password" placeholder="••••••••" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} />
-            </div>
+            <div style={s.field}><label style={s.label}>Correo</label><input style={s.input} type="email" placeholder="tu@correo.com" value={email} onChange={e=>setEmail(e.target.value)} /></div>
+            <div style={s.field}><label style={s.label}>Contraseña</label><input style={s.input} type="password" placeholder="Mínimo 8 caracteres" value={password} onChange={e=>setPassword(e.target.value)} /></div>
+            <div style={s.field}><label style={s.label}>Confirmar contraseña</label><input style={s.input} type="password" placeholder="••••••••" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} /></div>
             <button style={s.btn} onClick={handleRegister} disabled={loading}>{loading ? "Creando cuenta..." : "Crear cuenta ✦"}</button>
             <p style={s.note}>Sin spam. Sin tarjeta. 3 consultas gratuitas por app.</p>
           </>}
+          <p style={s.firma}>-=ArtMoreno=-</p>
         </div>
       </div>
     </div>
   );
 }
 
-function Dashboard({ user, onLogout }) {
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        window.location.href = `https://universo-despertar-art.vercel.app?token=${session.access_token}`;
-      }
-    });
-  }, []);
+function AdminPanel({ user, onLogout }) {
+  const [perfiles, setPerfiles] = useState([]);
+  const [vista, setVista] = useState("lista");
+  const [perfilActivo, setPerfilActivo] = useState(null);
+  const [form, setForm] = useState({ nombre: "", fecha_nacimiento: "", notas: "" });
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => { cargarPerfiles(); }, []);
+
+  const cargarPerfiles = async () => {
+    const { data } = await supabase.from("perfiles_clientes").select("*").eq("activo", true).order("fecha_creacion", { ascending: false });
+    setPerfiles(data || []);
+  };
+
+  const crearPerfil = async () => {
+    if (!form.nombre) { setMsg("El nombre es obligatorio."); return; }
+    setLoading(true);
+    const { error } = await supabase.from("perfiles_clientes").insert([{ nombre: form.nombre, fecha_nacimiento: form.fecha_nacimiento || null, notas: form.notas || null }]);
+    setLoading(false);
+    if (error) { setMsg("Error al crear perfil."); return; }
+    setForm({ nombre: "", fecha_nacimiento: "", notas: "" });
+    setMsg("Perfil creado ✦");
+    cargarPerfiles();
+    setTimeout(() => setMsg(""), 2000);
+  };
+
+  const abrirPerfil = (perfil) => { setPerfilActivo(perfil); setVista("perfil"); };
 
   return (
     <div style={s.wrap}>
-      <div style={{position:"relative",zIndex:2,textAlign:"center",paddingTop:"3rem"}}>
-        <p style={s.eyebrow}>Bienvenido de vuelta</p>
-        <h1 style={s.title}>Universo <em style={{fontStyle:"italic",color:"#E8D5B0"}}>Despertar</em></h1>
-        <p style={s.sub}>Entrando al universo...</p>
+      <div style={{position:"relative",zIndex:2,maxWidth:700,margin:"0 auto"}}>
+        <div style={s.divider}><div style={s.lineL}/><div style={s.dc}><div style={s.ds}/><span style={s.dsym}>✦</span><div style={s.ds}/></div><div style={s.lineR}/></div>
+        <div style={{textAlign:"center",marginBottom:"2rem"}}>
+          <p style={s.eyebrow}>Panel de administración</p>
+          <h1 style={s.title}>Universo <em style={{fontStyle:"italic",color:"#E8D5B0"}}>Despertar</em></h1>
+          <p style={{...s.sub, marginBottom:"0.5rem"}}>{user.email}</p>
+        </div>
+
+        {vista === "lista" && <>
+          <div style={{...s.portal, marginBottom:"1.5rem"}}>
+            <p style={s.eyebrow}>Nuevo perfil</p>
+            <div style={s.field}><label style={s.label}>Nombre</label><input style={s.input} placeholder="Nombre del cliente" value={form.nombre} onChange={e=>setForm({...form, nombre:e.target.value})} /></div>
+            <div style={s.field}><label style={s.label}>Fecha de nacimiento</label><input style={s.input} type="date" value={form.fecha_nacimiento} onChange={e=>setForm({...form, fecha_nacimiento:e.target.value})} /></div>
+            <div style={s.field}><label style={s.label}>Notas iniciales</label><textarea style={{...s.input, height:80, resize:"none"}} placeholder="Lo que sabes antes de leer..." value={form.notas} onChange={e=>setForm({...form, notas:e.target.value})} /></div>
+            {msg && <p style={{fontSize:11,color:"#C9A96E",marginBottom:"0.5rem"}}>{msg}</p>}
+            <button style={s.btn} onClick={crearPerfil} disabled={loading}>{loading ? "Creando..." : "Crear perfil ✦"}</button>
+          </div>
+
+          <div style={s.grid}>
+            {perfiles.map(p => (
+              <div key={p.id} style={{...s.card, cursor:"pointer"}} onClick={() => abrirPerfil(p)}>
+                <span style={s.cardNum}>{p.fecha_nacimiento || "Sin fecha"}</span>
+                <p style={s.cardTitle}>{p.nombre}</p>
+                {p.notas && <p style={{fontSize:11,color:"#C4BCB0",marginTop:"0.5rem",lineHeight:1.6}}>{p.notas.substring(0,80)}...</p>}
+                <span style={s.cardTag}>Ver perfil →</span>
+              </div>
+            ))}
+          </div>
+        </>}
+
+        {vista === "perfil" && perfilActivo && (
+          <PerfilCliente perfil={perfilActivo} onVolver={() => { setVista("lista"); cargarPerfiles(); }} />
+        )}
+
+        <button style={{...s.btn, marginTop:"2rem", maxWidth:200, margin:"2rem auto 0", display:"block"}} onClick={onLogout}>Cerrar sesión</button>
+      </div>
+    </div>
+  );
+}
+
+function PerfilCliente({ perfil, onVolver }) {
+  const [bitacora, setBitacora] = useState([]);
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    cargarBitacora();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setToken(session.access_token);
+    });
+  }, []);
+
+  const cargarBitacora = async () => {
+    const { data } = await supabase.from("bitacora").select("*").eq("perfil_id", perfil.id).order("fecha", { ascending: false });
+    setBitacora(data || []);
+  };
+
+  const APPS_LECTURA = [
+    { icon: "🌙", title: "Intérprete de Sueños", url: "https://interprete-suenos-art.vercel.app/" },
+    { icon: "🃏", title: "Lector de Cartas", url: "https://lector-cartas-art.vercel.app/" },
+    { icon: "🖐", title: "La Quiromante", url: "https://la-quiromante-art.vercel.app/" },
+  ];
+
+  return (
+    <div>
+      <button style={{...s.btn, maxWidth:120, marginBottom:"1.5rem"}} onClick={onVolver}>← Volver</button>
+      <div style={{...s.portal, marginBottom:"1.5rem"}}>
+        <p style={s.eyebrow}>Perfil del cliente</p>
+        <h2 style={{...s.title, fontSize:"1.5rem"}}>{perfil.nombre}</h2>
+        {perfil.fecha_nacimiento && <p style={s.sub}>Nacimiento: {perfil.fecha_nacimiento}</p>}
+        {perfil.notas && <p style={{fontSize:12,color:"#C4BCB0",lineHeight:1.7,marginTop:"0.5rem"}}>{perfil.notas}</p>}
+        <div style={{marginTop:"1.5rem"}}>
+          <p style={s.eyebrow}>Iniciar lectura</p>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:"0.75rem"}}>
+            {APPS_LECTURA.map(app => (
+              <a key={app.title} href={`${app.url}?token=${token}&perfil_id=${perfil.id}`} target="_blank" rel="noreferrer"
+                style={{...s.btn, width:"auto", padding:"0.5rem 1rem", fontSize:11, textDecoration:"none", display:"inline-block"}}>
+                {app.icon} {app.title}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={s.portal}>
+        <p style={s.eyebrow}>Bitácora</p>
+        {bitacora.length === 0 && <p style={s.sub}>Sin registros aún.</p>}
+        {bitacora.map(b => (
+          <div key={b.id} style={{borderBottom:"0.5px solid rgba(201,169,110,0.15)",paddingBottom:"1rem",marginBottom:"1rem"}}>
+            <p style={{fontSize:10,letterSpacing:2,color:"rgba(201,169,110,0.6)",marginBottom:"0.4rem"}}>{b.app.toUpperCase()} · {new Date(b.fecha).toLocaleDateString()}</p>
+            <p style={{fontSize:12,color:"#C4BCB0",marginBottom:"0.4rem"}}><strong style={{color:"#E8D5B0"}}>Consulta:</strong> {b.consulta}</p>
+            <p style={{fontSize:12,color:"#C4BCB0",lineHeight:1.7}}><strong style={{color:"#E8D5B0"}}>Respuesta:</strong> {b.respuesta?.substring(0,200)}...</p>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -136,7 +254,7 @@ function Dashboard({ user, onLogout }) {
 
 const s = {
   wrap:{background:"#0E0B08",minHeight:"100vh",padding:"2.5rem 1.5rem",fontFamily:"'Jost',sans-serif",textAlign:"center",color:"#F5F0E8"},
-  divider:{display:"flex",alignItems:"center",justifyContent:"center",maxWidth:900,margin:"0 auto 2rem"},
+  divider:{display:"flex",alignItems:"center",justifyContent:"center",maxWidth:900,margin:"0 auto 2rem",position:"relative",zIndex:2},
   lineL:{flex:1,height:"0.5px",background:"linear-gradient(to right,transparent,rgba(201,169,110,0.5))"},
   lineR:{flex:1,height:"0.5px",background:"linear-gradient(to left,transparent,rgba(201,169,110,0.5))"},
   dc:{display:"flex",alignItems:"center",padding:"0 4px"},
