@@ -245,7 +245,7 @@ function PerfilCliente({ perfil, onVolver }) {
           <div key={b.id} style={{borderBottom:"0.5px solid rgba(201,169,110,0.15)",paddingBottom:"1rem",marginBottom:"1rem"}}>
             <p style={{fontSize:10,letterSpacing:2,color:"rgba(201,169,110,0.6)",marginBottom:"0.4rem"}}>{b.app.toUpperCase()} · {new Date(b.fecha).toLocaleDateString()}</p>
             <p style={{fontSize:12,color:"#C4BCB0",marginBottom:"0.4rem"}}><strong style={{color:"#E8D5B0"}}>Consulta:</strong> {b.consulta}</p>
-            <p style={{fontSize:12,color:"#C4BCB0",lineHeight:1.7}}><strong style={{color:"#E8D5B0"}}>Respuesta:</strong> {b.respuesta?.substring(0,200)}...</p>
+            <p style={{fontSize:12,color:"#C4BCB0",lineHeight:1.7,whiteSpace:"pre-wrap"}}><strong style={{color:"#E8D5B0"}}>Respuesta:</strong> {b.respuesta}</p>
           </div>
         ))}
       </div>
