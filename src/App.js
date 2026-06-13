@@ -197,8 +197,9 @@ function AdminPanel({ user, onLogout }) {
 function PerfilCliente({ perfil, onVolver }) {
   const [bitacora, setBitacora] = useState([]);
   const [token, setToken] = useState("");
+  const [tabActiva, setTabActiva] = useState("suenos");
 
- useEffect(() => {
+  useEffect(() => {
     cargarBitacora();
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setToken(session.access_token);
@@ -216,6 +217,14 @@ function PerfilCliente({ perfil, onVolver }) {
     { icon: "🃏", title: "Lector de Cartas", url: "https://lector-cartas-art.vercel.app/" },
     { icon: "🖐", title: "La Quiromante", url: "https://la-quiromante-art.vercel.app/" },
   ];
+
+  const TABS = [
+    { id: "suenos", label: "🌙 Sueños", app: "suenos" },
+    { id: "cartas", label: "🃏 Cartas", app: "cartas" },
+    { id: "manos", label: "🖐 Manos", app: "manos" },
+  ];
+
+  const registros = bitacora.filter(b => b.app === tabActiva);
 
   return (
     <div>
@@ -240,10 +249,22 @@ function PerfilCliente({ perfil, onVolver }) {
 
       <div style={s.portal}>
         <p style={s.eyebrow}>Bitácora</p>
-        {bitacora.length === 0 && <p style={s.sub}>Sin registros aún.</p>}
-        {bitacora.map(b => (
+        <div style={{display:"flex",borderBottom:"0.5px solid rgba(201,169,110,0.2)",marginBottom:"1.5rem"}}>
+          {TABS.map(tab => (
+            <button key={tab.id} onClick={() => setTabActiva(tab.id)}
+              style={{flex:1,padding:"0.5rem",fontSize:11,letterSpacing:2,textTransform:"uppercase",
+                color: tabActiva === tab.id ? "#C9A96E" : "rgba(201,169,110,0.4)",
+                cursor:"pointer",border:"none",
+                borderBottom: tabActiva === tab.id ? "1px solid #C9A96E" : "1px solid transparent",
+                background:"none",fontFamily:"'Jost',sans-serif",transition:"all 0.3s"}}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {registros.length === 0 && <p style={s.sub}>Sin registros aún.</p>}
+        {registros.map(b => (
           <div key={b.id} style={{borderBottom:"0.5px solid rgba(201,169,110,0.15)",paddingBottom:"1rem",marginBottom:"1rem"}}>
-            <p style={{fontSize:10,letterSpacing:2,color:"rgba(201,169,110,0.6)",marginBottom:"0.4rem"}}>{b.app.toUpperCase()} · {new Date(b.fecha).toLocaleDateString()}</p>
+            <p style={{fontSize:10,letterSpacing:2,color:"rgba(201,169,110,0.6)",marginBottom:"0.4rem"}}>{new Date(b.fecha).toLocaleDateString()}</p>
             <p style={{fontSize:12,color:"#C4BCB0",marginBottom:"0.4rem"}}><strong style={{color:"#E8D5B0"}}>Consulta:</strong> {b.consulta}</p>
             <p style={{fontSize:12,color:"#C4BCB0",lineHeight:1.7,whiteSpace:"pre-wrap"}}><strong style={{color:"#E8D5B0"}}>Respuesta:</strong> {b.respuesta}</p>
           </div>
@@ -252,7 +273,6 @@ function PerfilCliente({ perfil, onVolver }) {
     </div>
   );
 }
-
 const s = {
   wrap:{background:"#0E0B08",minHeight:"100vh",padding:"2.5rem 1.5rem",fontFamily:"'Jost',sans-serif",textAlign:"center",color:"#F5F0E8"},
   divider:{display:"flex",alignItems:"center",justifyContent:"center",maxWidth:900,margin:"0 auto 2rem",position:"relative",zIndex:2},
