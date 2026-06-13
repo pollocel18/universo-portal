@@ -198,6 +198,8 @@ function PerfilCliente({ perfil, onVolver }) {
   const [bitacora, setBitacora] = useState([]);
   const [token, setToken] = useState("");
   const [tabActiva, setTabActiva] = useState("suenos");
+  const [analisis, setAnalisis] = useState("");
+  const [loadingAnalisis, setLoadingAnalisis] = useState(false);
 
   useEffect(() => {
     cargarBitacora();
@@ -212,6 +214,41 @@ function PerfilCliente({ perfil, onVolver }) {
     setBitacora(data || []);
   };
 
+  const generarAnalisis = async () => {
+    if (bitacora.length === 0) return;
+    setLoadingAnalisis(true);
+
+    const historial = bitacora
+      .filter(b => b.app !== "analisis")
+      .map(b => `[${b.app.toUpperCase()} · ${new Date(b.fecha).toLocaleDateString()}]\nConsulta: ${b.consulta}\nRespuesta: ${b.respuesta}`)
+      .join("\n\n---\n\n");
+
+    try {
+      const res = await fetch('https://cumpleanos-app.onrender.com/api/analisis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-secret': process.env.REACT_APP_API_SECRET,
+        },
+        body: JSON.stringify({ historial }),
+      });
+      const data = await res.json();
+      setAnalisis(data.respuesta);
+
+      await supabase.from("bitacora").insert([{
+        perfil_id: perfil.id,
+        app: "analisis",
+        consulta: "Análisis integrado",
+        respuesta: data.respuesta,
+      }]);
+      cargarBitacora();
+    } catch (err) {
+      setAnalisis("Error al generar el análisis.");
+    } finally {
+      setLoadingAnalisis(false);
+    }
+  };
+
   const APPS_LECTURA = [
     { icon: "🌙", title: "Intérprete de Sueños", url: "https://interprete-suenos-art.vercel.app/" },
     { icon: "🃏", title: "Lector de Cartas", url: "https://lector-cartas-art.vercel.app/" },
@@ -222,6 +259,7 @@ function PerfilCliente({ perfil, onVolver }) {
     { id: "suenos", label: "🌙 Sueños", app: "suenos" },
     { id: "cartas", label: "🃏 Cartas", app: "cartas" },
     { id: "manos", label: "🖐 Manos", app: "manos" },
+    { id: "analisis", label: "✦ Análisis", app: "analisis" },
   ];
 
   const registros = bitacora.filter(b => b.app === tabActiva);
@@ -261,18 +299,42 @@ function PerfilCliente({ perfil, onVolver }) {
             </button>
           ))}
         </div>
-        {registros.length === 0 && <p style={s.sub}>Sin registros aún.</p>}
-        {registros.map(b => (
+
+        {tabActiva === "analisis" && (
+          <div>
+            <button style={{...s.btn, marginBottom:"1.5rem"}} onClick={generarAnalisis} disabled={loadingAnalisis || bitacora.filter(b=>b.app!=="analisis").length === 0}>
+              {loadingAnalisis ? "Integrando el mapa..." : "✦ Generar análisis integrado ✦"}
+            </button>
+            {analisis && (
+              <p style={{fontSize:12,color:"#C4BCB0",lineHeight:1.9,whiteSpace:"pre-wrap",textAlign:"left"}}>{analisis}</p>
+            )}
+            {registros.length > 0 && (
+              <div style={{marginTop:"2rem"}}>
+                <p style={{...s.eyebrow, marginBottom:"1rem"}}>Análisis anteriores</p>
+                {registros.map(b => (
+                  <div key={b.id} style={{borderBottom:"0.5px solid rgba(201,169,110,0.15)",paddingBottom:"1rem",marginBottom:"1rem"}}>
+                    <p style={{fontSize:10,letterSpacing:2,color:"rgba(201,169,110,0.6)",marginBottom:"0.4rem"}}>{new Date(b.fecha).toLocaleDateString()}</p>
+                    <p style={{fontSize:12,color:"#C4BCB0",lineHeight:1.7,whiteSpace:"pre-wrap",textAlign:"left"}}>{b.respuesta}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tabActiva !== "analisis" && registros.length === 0 && <p style={s.sub}>Sin registros aún.</p>}
+        {tabActiva !== "analisis" && registros.map(b => (
           <div key={b.id} style={{borderBottom:"0.5px solid rgba(201,169,110,0.15)",paddingBottom:"1rem",marginBottom:"1rem"}}>
             <p style={{fontSize:10,letterSpacing:2,color:"rgba(201,169,110,0.6)",marginBottom:"0.4rem"}}>{new Date(b.fecha).toLocaleDateString()}</p>
-            <p style={{fontSize:12,color:"#C4BCB0",marginBottom:"0.4rem"}}><strong style={{color:"#E8D5B0"}}>Consulta:</strong> {b.consulta}</p>
-            <p style={{fontSize:12,color:"#C4BCB0",lineHeight:1.7,whiteSpace:"pre-wrap"}}><strong style={{color:"#E8D5B0"}}>Respuesta:</strong> {b.respuesta}</p>
+            <p style={{fontSize:12,color:"#C4BCB0",marginBottom:"0.4rem",textAlign:"left"}}><strong style={{color:"#E8D5B0"}}>Consulta:</strong> {b.consulta}</p>
+            <p style={{fontSize:12,color:"#C4BCB0",lineHeight:1.7,whiteSpace:"pre-wrap",textAlign:"left"}}><strong style={{color:"#E8D5B0"}}>Respuesta:</strong> {b.respuesta}</p>
           </div>
         ))}
       </div>
     </div>
   );
 }
+
 const s = {
   wrap:{background:"#0E0B08",minHeight:"100vh",padding:"2.5rem 1.5rem",fontFamily:"'Jost',sans-serif",textAlign:"center",color:"#F5F0E8"},
   divider:{display:"flex",alignItems:"center",justifyContent:"center",maxWidth:900,margin:"0 auto 2rem",position:"relative",zIndex:2},
